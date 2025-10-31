@@ -23,7 +23,7 @@ func (r *PostgresDepartamentRepository) FindByID(id string) (*models.Departament
 	var dept models.Departament
 	if err := r.db.First(&dept, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("not_found")
+			return nil, ErrNotFound
 		}
 		return nil, err
 	}

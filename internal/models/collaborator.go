@@ -5,7 +5,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/mlucas4330/takehome-go/internal/application"
+	"github.com/mlucas4330/takehome-go/internal/apperror"
 )
 
 type Collaborator struct {
@@ -20,6 +20,7 @@ type Collaborator struct {
 
 func NewCollaborator(nome, cpf string, rg *string, depID string) (*Collaborator, error) {
 	c := &Collaborator{Nome: nome, CPF: cpf, RG: rg, DepartamentoID: depID}
+	c.Normalize()
 	if err := c.ValidateCPF(); err != nil {
 		return nil, err
 	}
@@ -27,6 +28,24 @@ func NewCollaborator(nome, cpf string, rg *string, depID string) (*Collaborator,
 		return nil, err
 	}
 	return c, nil
+}
+
+func (c *Collaborator) Normalize() {
+	c.CPF = onlyDigits(c.CPF)
+	if c.RG != nil {
+		rg := onlyDigits(*c.RG)
+		c.RG = &rg
+	}
+}
+
+func onlyDigits(s string) string {
+	out := make([]rune, 0, len(s))
+	for _, r := range s {
+		if unicode.IsDigit(r) {
+			out = append(out, r)
+		}
+	}
+	return string(out)
 }
 
 func (c *Collaborator) ValidateCPF() error {
@@ -38,7 +57,7 @@ func (c *Collaborator) ValidateCPF() error {
 	}
 
 	if len(d) != 11 {
-		return application.NewError(
+		return apperror.New(
 			http.StatusUnprocessableEntity,
 			"invalid_cpf",
 			"CPF deve conter 11 dígitos",
@@ -54,7 +73,7 @@ func (c *Collaborator) ValidateCPF() error {
 		}
 	}
 	if allEq {
-		return application.NewError(
+		return apperror.New(
 			http.StatusUnprocessableEntity,
 			"invalid_cpf",
 			"CPF inválido (todos os dígitos são iguais)",
@@ -71,7 +90,7 @@ func (c *Collaborator) ValidateCPF() error {
 		dv1 = 0
 	}
 	if dv1 != d[9] {
-		return application.NewError(
+		return apperror.New(
 			http.StatusUnprocessableEntity,
 			"invalid_cpf",
 			"CPF inválido (primeiro dígito verificador)",
@@ -88,7 +107,7 @@ func (c *Collaborator) ValidateCPF() error {
 		dv2 = 0
 	}
 	if dv2 != d[10] {
-		return application.NewError(
+		return apperror.New(
 			http.StatusUnprocessableEntity,
 			"invalid_cpf",
 			"CPF inválido (segundo dígito verificador)",
@@ -112,7 +131,7 @@ func (c *Collaborator) ValidateRG() error {
 	}
 
 	if len(d) < 7 || len(d) > 9 {
-		return application.NewError(
+		return apperror.New(
 			http.StatusUnprocessableEntity,
 			"invalid_rg",
 			"RG deve conter entre 7 e 9 dígitos",
@@ -128,7 +147,7 @@ func (c *Collaborator) ValidateRG() error {
 		}
 	}
 	if allEq {
-		return application.NewError(
+		return apperror.New(
 			http.StatusUnprocessableEntity,
 			"invalid_rg",
 			"RG inválido (todos os dígitos são iguais)",

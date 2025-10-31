@@ -1,14 +1,19 @@
-FROM golang:1.25-alpine AS builder
+FROM golang:1.25-alpine
+
 WORKDIR /app
-RUN apk add --no-cache build-base git
+
+RUN apk add --no-cache git build-base
+
+RUN go install github.com/swaggo/swag/cmd/swag@latest
+RUN go install github.com/cosmtrek/air@latest
+
 COPY go.mod go.sum ./
 RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o server ./cmd/api
 
-FROM gcr.io/distroless/base-debian12
-WORKDIR /app
-COPY --from=builder /app/server /app/server
+COPY . .
+
 EXPOSE 8080
-USER nonroot:nonroot
-ENTRYPOINT ["/app/server"]
+
+ENV CGO_ENABLED=0
+
+CMD ["air"]

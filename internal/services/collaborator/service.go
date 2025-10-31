@@ -1,9 +1,12 @@
-package services
+package collaborator
 
 import (
 	"context"
-	"log"
+	"errors"
+	"net/http"
 
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/mlucas4330/takehome-go/internal/apperror"
 	"github.com/mlucas4330/takehome-go/internal/dtos"
 	"github.com/mlucas4330/takehome-go/internal/models"
 	"github.com/mlucas4330/takehome-go/internal/repositories"
@@ -33,17 +36,29 @@ func (s *CollaboratorService) Create(ctx context.Context, req dtos.CreateCollabo
 		return dtos.CreateCollaboratorResponse{}, err
 	}
 
-	dept, err := s.deptRepo.FindByID(col.DepartamentoID)
+	if err := s.colRepo.Create(ctx, col); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.Is(err, repositories.ErrUniqueViolation) && errors.As(err, &pgErr) {
+			switch pgErr.ConstraintName {
+			case "colaboradores_cpf_unique":
+				return dtos.CreateCollaboratorResponse{}, ErrCPFAlreadyExists
+			case "colaboradores_rg_unique":
+				return dtos.CreateCollaboratorResponse{}, ErrRGAlreadyExists
+			default:
+				return dtos.CreateCollaboratorResponse{}, ErrCPFOrRGAlreadyExists
+			}
+		}
 
-	log.Fatal(dept)
+		if errors.Is(err, repositories.ErrForeignKey) {
+			return dtos.CreateCollaboratorResponse{}, ErrDepartamentNotFound
+		}
 
-	if err != nil {
-		return dtos.CreateCollaboratorResponse{}, err
-	}
-
-	err = s.colRepo.Create(ctx, col)
-	if err != nil {
-		return dtos.CreateCollaboratorResponse{}, err
+		return dtos.CreateCollaboratorResponse{}, apperror.New(
+			http.StatusInternalServerError,
+			"internal_error",
+			"Falha ao criar colaborador",
+			nil,
+		)
 	}
 
 	return toCreateResponseDTO(col), nil

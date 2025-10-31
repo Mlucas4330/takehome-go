@@ -1,17 +1,17 @@
 package dtos
 
 type CreateCollaboratorRequest struct {
-	Nome           string  `json:"nome" binding:"required"`
-	CPF            string  `json:"cpf" binding:"required"`
-	RG             *string `json:"rg"`
-	DepartamentoID string  `json:"departamento_id" binding:"required"`
+	Nome           string  `json:"nome" example:"João Silva"`
+	CPF            string  `json:"cpf" example:"123.456.789-09"`
+	RG             *string `json:"rg,omitempty" example:"12.345.678-9"`
+	DepartamentoID string  `json:"departamento_id" example:"b4a3f6a4-6a37-4e1e-9c2f-4a7c6f9e0a1b"`
 }
 
 type CreateCollaboratorResponse struct {
-	Nome           string  `json:"nome" binding:"required"`
-	CPF            string  `json:"cpf" binding:"required"`
-	RG             *string `json:"rg"`
-	DepartamentoID string  `json:"departamento_id" binding:"required"`
+	Nome           string  `json:"nome" example:"João Silva"`
+	CPF            string  `json:"cpf" example:"123.456.789-09"`
+	RG             *string `json:"rg,omitempty" example:"12.345.678-9"`
+	DepartamentoID string  `json:"departamento_id" example:"b4a3f6a4-6a37-4e1e-9c2f-4a7c6f9e0a1b"`
 }
 
 type UpdateCollaboratorRequest struct {

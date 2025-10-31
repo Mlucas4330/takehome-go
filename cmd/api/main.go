@@ -8,8 +8,6 @@ import (
 	"github.com/mlucas4330/takehome-go/internal/httpapi"
 	"github.com/mlucas4330/takehome-go/internal/infrastructure/config"
 	"github.com/mlucas4330/takehome-go/internal/infrastructure/database"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
@@ -22,6 +20,5 @@ func main() {
 
 	httpapi.SetupRoutes(r, db)
 
-	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	r.Run(fmt.Sprintf(":%d", cfg.Port))
 }
