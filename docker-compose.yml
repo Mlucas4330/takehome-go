@@ -1,50 +1,46 @@
 services:
-    db:
-        image: postgres:16
+    postgres:
+        image: postgres:15-alpine
+        container_name: takehome-go-db
         environment:
-            POSTGRES_USER: ${DB_USER}
-            POSTGRES_PASSWORD: ${DB_PASS}
-            POSTGRES_DB: ${DB_NAME}
-        healthcheck:
-            test: ['CMD-SHELL', 'pg_isready -U ${DB_USER} -d ${DB_NAME}']
-            interval: 5s
-            timeout: 3s
-            retries: 10
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: takehome_db
+        ports:
+            - '5432:5432'
         volumes:
-            - dbdata:/var/lib/postgresql/data
+            - postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U postgres']
+            interval: 10s
+            timeout: 5s
+            retries: 5
 
     flyway:
-        image: flyway/flyway:10
-        depends_on:
-            db:
-                condition: service_healthy
-        environment:
-            FLYWAY_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
-            FLYWAY_USER: ${DB_USER}
-            FLYWAY_PASSWORD: ${DB_PASS}
-            FLYWAY_SCHEMAS: public
-            FLYWAY_LOCATIONS: filesystem:/flyway/sql
-        command: -connectRetries=60 migrate
+        image: flyway/flyway:latest
+        container_name: takehome-go-migrations
+        command: -url=jdbc:postgresql://postgres:5432/takehome_db -user=postgres -password=postgres -connectRetries=60 migrate
         volumes:
-            - ./docker/flyway/migrations:/flyway/sql
+            - ./migrations:/flyway/sql
+        depends_on:
+            postgres:
+                condition: service_healthy
 
     api:
-        build:
-            context: .
-            dockerfile: docker/Dockerfile
-        env_file:
-            - .env
+        build: .
+        container_name: takehome-go-api
+        environment:
+            DB_HOST: postgres
+            DB_PORT: 5432
+            DB_USER: postgres
+            DB_PASSWORD: postgres
+            DB_NAME: takehome_db
+        ports:
+            - '8080:8080'
         depends_on:
             flyway:
                 condition: service_completed_successfully
-        ports:
-            - '8080:8080'
-        command: air
-        working_dir: /app
-        environment:
-            - CGO_ENABLED=0
-            - GOOS=linux
-            - GOARCH=amd64
+        restart: unless-stopped
 
 volumes:
-    dbdata:
+    postgres_data:

@@ -1,0 +1,465 @@
+basePath: /
+definitions:
+  domain.Colaborador:
+    properties:
+      cpf:
+        type: string
+      created_at:
+        type: string
+      departamento:
+        $ref: '#/definitions/domain.Departamento'
+      departamento_id:
+        type: string
+      id:
+        type: string
+      nome:
+        type: string
+      rg:
+        type: string
+      updated_at:
+        type: string
+    required:
+    - cpf
+    - departamento_id
+    - nome
+    type: object
+  domain.ColaboradorListRequest:
+    properties:
+      cpf:
+        type: string
+      departamento_id:
+        type: string
+      nome:
+        type: string
+      page:
+        type: integer
+      page_size:
+        type: integer
+      rg:
+        type: string
+    type: object
+  domain.ColaboradorResponse:
+    properties:
+      cpf:
+        type: string
+      created_at:
+        type: string
+      departamento_id:
+        type: string
+      id:
+        type: string
+      nome:
+        type: string
+      nome_gerente:
+        type: string
+      rg:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  domain.Departamento:
+    properties:
+      created_at:
+        type: string
+      departamento_superior:
+        $ref: '#/definitions/domain.Departamento'
+      departamento_superior_id:
+        type: string
+      gerente:
+        $ref: '#/definitions/domain.Colaborador'
+      gerente_id:
+        type: string
+      id:
+        type: string
+      nome:
+        type: string
+      subdepartamentos:
+        items:
+          $ref: '#/definitions/domain.Departamento'
+        type: array
+      updated_at:
+        type: string
+    required:
+    - gerente_id
+    - nome
+    type: object
+  domain.DepartamentoListRequest:
+    properties:
+      departamento_superior_id:
+        type: string
+      gerente_nome:
+        type: string
+      nome:
+        type: string
+      page:
+        type: integer
+      page_size:
+        type: integer
+    type: object
+  domain.DepartamentoResponse:
+    properties:
+      created_at:
+        type: string
+      departamento_superior_id:
+        type: string
+      gerente_id:
+        type: string
+      id:
+        type: string
+      nome:
+        type: string
+      nome_gerente:
+        type: string
+      subdepartamentos:
+        items:
+          $ref: '#/definitions/domain.DepartamentoResponse'
+        type: array
+      updated_at:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API REST para gerenciar colaboradores e departamentos
+  title: API de Colaboradores e Departamentos
+  version: "1.0"
+paths:
+  /api/v1/colaboradores:
+    post:
+      consumes:
+      - application/json
+      description: Cria um novo colaborador
+      parameters:
+      - description: Dados do colaborador
+        in: body
+        name: colaborador
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Colaborador'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Colaborador'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "422":
+          description: Unprocessable Entity
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Criar colaborador
+      tags:
+      - colaboradores
+  /api/v1/colaboradores/{id}:
+    delete:
+      description: Remove um colaborador
+      parameters:
+      - description: ID do colaborador
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Deletar colaborador
+      tags:
+      - colaboradores
+    get:
+      description: Retorna um colaborador e o nome do gerente
+      parameters:
+      - description: ID do colaborador
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.ColaboradorResponse'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Buscar colaborador por ID
+      tags:
+      - colaboradores
+    put:
+      consumes:
+      - application/json
+      description: Atualiza os dados de um colaborador
+      parameters:
+      - description: ID do colaborador
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados do colaborador
+        in: body
+        name: colaborador
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Colaborador'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Colaborador'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "422":
+          description: Unprocessable Entity
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Atualizar colaborador
+      tags:
+      - colaboradores
+  /api/v1/colaboradores/listar:
+    post:
+      consumes:
+      - application/json
+      description: Lista colaboradores com filtros e paginação
+      parameters:
+      - description: Filtros e paginação
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.ColaboradorListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Listar colaboradores
+      tags:
+      - colaboradores
+  /api/v1/departamentos:
+    post:
+      consumes:
+      - application/json
+      description: Cria um novo departamento
+      parameters:
+      - description: Dados do departamento
+        in: body
+        name: departamento
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Departamento'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Departamento'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "422":
+          description: Unprocessable Entity
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Criar departamento
+      tags:
+      - departamentos
+  /api/v1/departamentos/{id}:
+    delete:
+      description: Remove um departamento
+      parameters:
+      - description: ID do departamento
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Deletar departamento
+      tags:
+      - departamentos
+    get:
+      description: Retorna um departamento com sua árvore hierárquica
+      parameters:
+      - description: ID do departamento
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.DepartamentoResponse'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Buscar departamento por ID
+      tags:
+      - departamentos
+    put:
+      consumes:
+      - application/json
+      description: Atualiza os dados de um departamento
+      parameters:
+      - description: ID do departamento
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados do departamento
+        in: body
+        name: departamento
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Departamento'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Departamento'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "422":
+          description: Unprocessable Entity
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Atualizar departamento
+      tags:
+      - departamentos
+  /api/v1/departamentos/listar:
+    post:
+      consumes:
+      - application/json
+      description: Lista departamentos com filtros e paginação
+      parameters:
+      - description: Filtros e paginação
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.DepartamentoListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Listar departamentos
+      tags:
+      - departamentos
+  /api/v1/gerentes/{id}/colaboradores:
+    get:
+      description: Retorna todos os colaboradores dos departamentos subordinados ao
+        gerente
+      parameters:
+      - description: ID do gerente
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Colaborador'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Listar colaboradores subordinados ao gerente
+      tags:
+      - gerentes
+swagger: "2.0"

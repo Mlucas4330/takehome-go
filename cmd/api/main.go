@@ -1,24 +1,72 @@
 package main
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/lib/pq"
-	"github.com/mlucas4330/takehome-go/internal/httpapi"
-	"github.com/mlucas4330/takehome-go/internal/infrastructure/config"
-	"github.com/mlucas4330/takehome-go/internal/infrastructure/database"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
+	"github.com/mlucas4330/takehome-go/internal/database"
+	"github.com/mlucas4330/takehome-go/internal/handlers"
+	"github.com/mlucas4330/takehome-go/internal/repositories"
+	"github.com/mlucas4330/takehome-go/internal/services"
+
+	_ "github.com/mlucas4330/takehome-go/docs"
 )
 
+// @title API de Colaboradores e Departamentos
+// @version 1.0
+// @description API REST para gerenciar colaboradores e departamentos
+// @host localhost:8080
+// @BasePath /
 func main() {
-	cfg := config.LoadConfig()
+	db, err := database.Connect()
+	if err != nil {
+		log.Fatal("Failed to connect to database:", err)
+	}
 
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=%s TimeZone=%s", cfg.DBHost, cfg.DBUser, cfg.DBPass, cfg.DBName, cfg.DBPort, cfg.DBSSLMode, cfg.DBTimezone)
+	colabRepo := repositories.NewColaboradorRepository(db)
+	deptRepo := repositories.NewDepartamentoRepository(db)
 
-	db := database.Open(dsn)
-	r := gin.Default()
+	colabService := services.NewColaboradorService(colabRepo, deptRepo)
+	deptService := services.NewDepartamentoService(deptRepo, colabRepo)
 
-	httpapi.SetupRoutes(r, db)
+	colabHandler := handlers.NewColaboradorHandler(colabService)
+	deptHandler := handlers.NewDepartamentoHandler(deptService)
 
-	r.Run(fmt.Sprintf(":%d", cfg.Port))
+	router := gin.Default()
+
+	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	v1 := router.Group("/api/v1")
+	{
+		colaboradores := v1.Group("/colaboradores")
+		{
+			colaboradores.POST("", colabHandler.Create)
+			colaboradores.GET("/:id", colabHandler.GetByID)
+			colaboradores.PUT("/:id", colabHandler.Update)
+			colaboradores.DELETE("/:id", colabHandler.Delete)
+			colaboradores.POST("/listar", colabHandler.List)
+		}
+
+		departamentos := v1.Group("/departamentos")
+		{
+			departamentos.POST("", deptHandler.Create)
+			departamentos.GET("/:id", deptHandler.GetByID)
+			departamentos.PUT("/:id", deptHandler.Update)
+			departamentos.DELETE("/:id", deptHandler.Delete)
+			departamentos.POST("/listar", deptHandler.List)
+		}
+
+		gerentes := v1.Group("/gerentes")
+		{
+			gerentes.GET("/:id/colaboradores", deptHandler.GetGerenteColaboradores)
+		}
+	}
+
+	log.Println("Server starting on :8080")
+	if err := router.Run(":8080"); err != nil {
+		log.Fatal("Failed to start server:", err)
+	}
 }
