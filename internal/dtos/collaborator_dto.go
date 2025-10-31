@@ -1,20 +1,27 @@
-package dto
+package dtos
 
-type CreateColaboradorRequest struct {
+type CreateCollaboratorRequest struct {
 	Nome           string  `json:"nome" binding:"required"`
 	CPF            string  `json:"cpf" binding:"required"`
 	RG             *string `json:"rg"`
 	DepartamentoID string  `json:"departamento_id" binding:"required"`
 }
 
-type UpdateColaboradorRequest struct {
+type CreateCollaboratorResponse struct {
+	Nome           string  `json:"nome" binding:"required"`
+	CPF            string  `json:"cpf" binding:"required"`
+	RG             *string `json:"rg"`
+	DepartamentoID string  `json:"departamento_id" binding:"required"`
+}
+
+type UpdateCollaboratorRequest struct {
 	Nome           string  `json:"nome"`
 	CPF            string  `json:"cpf"`
 	RG             *string `json:"rg"`
 	DepartamentoID string  `json:"departamento_id"`
 }
 
-type ListColaboradorRequest struct {
+type ListCollaboratorRequest struct {
 	Nome           *string `json:"nome"`
 	CPF            *string `json:"cpf"`
 	RG             *string `json:"rg"`
