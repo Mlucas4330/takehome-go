@@ -38,23 +38,31 @@ definitions:
       rg:
         type: string
     type: object
+  domain.ColaboradorPage:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/domain.Colaborador'
+        type: array
+      page:
+        example: 1
+        type: integer
+      page_size:
+        example: 10
+        type: integer
+      total:
+        example: 1
+        type: integer
+    type: object
   domain.ColaboradorResponse:
     properties:
       cpf:
         type: string
-      created_at:
-        type: string
       departamento_id:
-        type: string
-      id:
         type: string
       nome:
         type: string
-      nome_gerente:
-        type: string
       rg:
-        type: string
-      updated_at:
         type: string
     type: object
   domain.Departamento:
@@ -117,6 +125,54 @@ definitions:
       updated_at:
         type: string
     type: object
+  domain.ErrCPFInvalido:
+    properties:
+      error:
+        example: CPF inválido
+        type: string
+    type: object
+  domain.ErrCPFJaCadastrado:
+    properties:
+      error:
+        example: CPF já cadastrado
+        type: string
+    type: object
+  domain.ErrColaboradorNaoEncontrado:
+    properties:
+      error:
+        example: Colaborador não encontrado
+        type: string
+    type: object
+  domain.ErrDepartamentoNaoEncontrado:
+    properties:
+      error:
+        example: Departamento não encontrado
+        type: string
+    type: object
+  domain.ErrIDInvalido:
+    properties:
+      error:
+        example: ID inválido
+        type: string
+    type: object
+  domain.ErrPayloadInvalido:
+    properties:
+      error:
+        example: 'json: cannot unmarshal'
+        type: string
+    type: object
+  domain.ErrRGJaCadastrado:
+    properties:
+      error:
+        example: RG já cadastrado
+        type: string
+    type: object
+  domain.ErrorResponse:
+    properties:
+      error:
+        example: Mensagem de erro
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -128,11 +184,12 @@ paths:
     post:
       consumes:
       - application/json
-      description: Cria um novo colaborador
+      description: Cria um novo colaborador. Valida CPF (único e válido), RG (único
+        se informado) e existência do departamento.
       parameters:
       - description: Dados do colaborador
         in: body
-        name: colaborador
+        name: payload
         required: true
         schema:
           $ref: '#/definitions/domain.Colaborador'
@@ -146,27 +203,21 @@ paths:
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/domain.ErrPayloadInvalido'
         "409":
           description: Conflict
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/domain.ErrRGJaCadastrado'
         "422":
           description: Unprocessable Entity
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/domain.ErrDepartamentoNaoEncontrado'
       summary: Criar colaborador
       tags:
       - colaboradores
   /api/v1/colaboradores/{id}:
     delete:
-      description: Remove um colaborador
+      description: Remove um colaborador.
       parameters:
       - description: ID do colaborador
         in: path
@@ -175,18 +226,22 @@ paths:
         type: string
       responses:
         "204":
-          description: No Content
+          description: Sem conteúdo
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrIDInvalido'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/domain.ErrColaboradorNaoEncontrado'
       summary: Deletar colaborador
       tags:
       - colaboradores
     get:
-      description: Retorna um colaborador e o nome do gerente
+      description: Retorna um colaborador e o nome do gerente do seu departamento.
       parameters:
       - description: ID do colaborador
         in: path
@@ -200,19 +255,22 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/domain.ColaboradorResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrIDInvalido'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/domain.ErrColaboradorNaoEncontrado'
       summary: Buscar colaborador por ID
       tags:
       - colaboradores
     put:
       consumes:
       - application/json
-      description: Atualiza os dados de um colaborador
+      description: Atualiza os dados de um colaborador. Aplica as mesmas validações
+        de criação.
       parameters:
       - description: ID do colaborador
         in: path
@@ -221,7 +279,7 @@ paths:
         type: string
       - description: Dados do colaborador
         in: body
-        name: colaborador
+        name: payload
         required: true
         schema:
           $ref: '#/definitions/domain.Colaborador'
@@ -235,21 +293,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/domain.ErrPayloadInvalido'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/domain.ErrColaboradorNaoEncontrado'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/domain.ErrRGJaCadastrado'
         "422":
           description: Unprocessable Entity
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/domain.ErrDepartamentoNaoEncontrado'
       summary: Atualizar colaborador
       tags:
       - colaboradores
@@ -257,7 +313,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Lista colaboradores com filtros e paginação
+      description: 'Lista colaboradores com filtros e paginação. Filtros aceitos:
+        nome, cpf, rg, departamento_id.'
       parameters:
       - description: Filtros e paginação
         in: body
@@ -271,14 +328,11 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/domain.ColaboradorPage'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/domain.ErrPayloadInvalido'
       summary: Listar colaboradores
       tags:
       - colaboradores
@@ -286,11 +340,12 @@ paths:
     post:
       consumes:
       - application/json
-      description: Cria um novo departamento
+      description: Cria um novo departamento. Valida gerente (se informado), departamento
+        superior (se informado) e previne ciclos.
       parameters:
       - description: Dados do departamento
         in: body
-        name: departamento
+        name: payload
         required: true
         schema:
           $ref: '#/definitions/domain.Departamento'
@@ -304,21 +359,21 @@ paths:
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/domain.ErrPayloadInvalido'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/domain.ErrRGJaCadastrado'
         "422":
           description: Unprocessable Entity
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/domain.ErrDepartamentoNaoEncontrado'
       summary: Criar departamento
       tags:
       - departamentos
   /api/v1/departamentos/{id}:
     delete:
-      description: Remove um departamento
+      description: Remove um departamento.
       parameters:
       - description: ID do departamento
         in: path
@@ -327,18 +382,23 @@ paths:
         type: string
       responses:
         "204":
-          description: No Content
+          description: Sem conteúdo
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrIDInvalido'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/domain.ErrColaboradorNaoEncontrado'
       summary: Deletar departamento
       tags:
       - departamentos
     get:
-      description: Retorna um departamento com sua árvore hierárquica
+      description: Retorna um departamento com sua árvore hierárquica e informações
+        do gerente.
       parameters:
       - description: ID do departamento
         in: path
@@ -352,19 +412,22 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/domain.DepartamentoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrIDInvalido'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/domain.ErrColaboradorNaoEncontrado'
       summary: Buscar departamento por ID
       tags:
       - departamentos
     put:
       consumes:
       - application/json
-      description: Atualiza os dados de um departamento
+      description: Atualiza os dados de um departamento. Valida gerente, departamento
+        superior e previne ciclos.
       parameters:
       - description: ID do departamento
         in: path
@@ -373,7 +436,7 @@ paths:
         type: string
       - description: Dados do departamento
         in: body
-        name: departamento
+        name: payload
         required: true
         schema:
           $ref: '#/definitions/domain.Departamento'
@@ -387,21 +450,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/domain.ErrPayloadInvalido'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/domain.ErrColaboradorNaoEncontrado'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/domain.ErrRGJaCadastrado'
         "422":
           description: Unprocessable Entity
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/domain.ErrDepartamentoNaoEncontrado'
       summary: Atualizar departamento
       tags:
       - departamentos
@@ -409,7 +470,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Lista departamentos com filtros e paginação
+      description: 'Lista departamentos com filtros e paginação. Filtros: nome, gerente_nome,
+        departamento_superior_id.'
       parameters:
       - description: Filtros e paginação
         in: body
@@ -423,21 +485,18 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/domain.ColaboradorPage'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/domain.ErrPayloadInvalido'
       summary: Listar departamentos
       tags:
       - departamentos
   /api/v1/gerentes/{id}/colaboradores:
     get:
       description: Retorna todos os colaboradores dos departamentos subordinados ao
-        gerente
+        gerente informado.
       parameters:
       - description: ID do gerente
         in: path
@@ -453,12 +512,14 @@ paths:
             items:
               $ref: '#/definitions/domain.Colaborador'
             type: array
-        "404":
-          description: Not Found
+        "400":
+          description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/domain.ErrIDInvalido'
+        "404":
+          description: 'Exemplo: {\"error\":\"gerente não encontrado\"}'
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
       summary: Listar colaboradores subordinados ao gerente
       tags:
       - gerentes

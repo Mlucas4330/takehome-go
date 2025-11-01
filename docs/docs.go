@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/api/v1/colaboradores": {
             "post": {
-                "description": "Cria um novo colaborador",
+                "description": "Cria um novo colaborador. Valida CPF (único e válido), RG (único se informado) e existência do departamento.",
                 "consumes": [
                     "application/json"
                 ],
@@ -31,7 +31,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "description": "Dados do colaborador",
-                        "name": "colaborador",
+                        "name": "payload",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -49,28 +49,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/domain.ErrPayloadInvalido"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/domain.ErrRGJaCadastrado"
                         }
                     },
                     "422": {
                         "description": "Unprocessable Entity",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/domain.ErrDepartamentoNaoEncontrado"
                         }
                     }
                 }
@@ -78,7 +69,7 @@ const docTemplate = `{
         },
         "/api/v1/colaboradores/listar": {
             "post": {
-                "description": "Lista colaboradores com filtros e paginação",
+                "description": "Lista colaboradores com filtros e paginação. Filtros aceitos: nome, cpf, rg, departamento_id.",
                 "consumes": [
                     "application/json"
                 ],
@@ -104,17 +95,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/domain.ColaboradorPage"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/domain.ErrPayloadInvalido"
                         }
                     }
                 }
@@ -122,7 +109,7 @@ const docTemplate = `{
         },
         "/api/v1/colaboradores/{id}": {
             "get": {
-                "description": "Retorna um colaborador e o nome do gerente",
+                "description": "Retorna um colaborador e o nome do gerente do seu departamento.",
                 "produces": [
                     "application/json"
                 ],
@@ -146,19 +133,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/domain.ColaboradorResponse"
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/domain.ErrIDInvalido"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/domain.ErrColaboradorNaoEncontrado"
                         }
                     }
                 }
             },
             "put": {
-                "description": "Atualiza os dados de um colaborador",
+                "description": "Atualiza os dados de um colaborador. Aplica as mesmas validações de criação.",
                 "consumes": [
                     "application/json"
                 ],
@@ -179,7 +169,7 @@ const docTemplate = `{
                     },
                     {
                         "description": "Dados do colaborador",
-                        "name": "colaborador",
+                        "name": "payload",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -197,34 +187,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/domain.ErrPayloadInvalido"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/domain.ErrColaboradorNaoEncontrado"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/domain.ErrRGJaCadastrado"
                         }
                     },
                     "422": {
                         "description": "Unprocessable Entity",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/domain.ErrDepartamentoNaoEncontrado"
                         }
                     }
                 }
             },
             "delete": {
-                "description": "Remove um colaborador",
+                "description": "Remove um colaborador.",
                 "tags": [
                     "colaboradores"
                 ],
@@ -240,15 +227,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "204": {
-                        "description": "No Content"
+                        "description": "Sem conteúdo",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/domain.ErrIDInvalido"
+                        }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/domain.ErrColaboradorNaoEncontrado"
                         }
                     }
                 }
@@ -256,7 +249,7 @@ const docTemplate = `{
         },
         "/api/v1/departamentos": {
             "post": {
-                "description": "Cria um novo departamento",
+                "description": "Cria um novo departamento. Valida gerente (se informado), departamento superior (se informado) e previne ciclos.",
                 "consumes": [
                     "application/json"
                 ],
@@ -270,7 +263,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "description": "Dados do departamento",
-                        "name": "departamento",
+                        "name": "payload",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -288,19 +281,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/domain.ErrPayloadInvalido"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/domain.ErrRGJaCadastrado"
                         }
                     },
                     "422": {
                         "description": "Unprocessable Entity",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/domain.ErrDepartamentoNaoEncontrado"
                         }
                     }
                 }
@@ -308,7 +301,7 @@ const docTemplate = `{
         },
         "/api/v1/departamentos/listar": {
             "post": {
-                "description": "Lista departamentos com filtros e paginação",
+                "description": "Lista departamentos com filtros e paginação. Filtros: nome, gerente_nome, departamento_superior_id.",
                 "consumes": [
                     "application/json"
                 ],
@@ -334,17 +327,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/domain.ColaboradorPage"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/domain.ErrPayloadInvalido"
                         }
                     }
                 }
@@ -352,7 +341,7 @@ const docTemplate = `{
         },
         "/api/v1/departamentos/{id}": {
             "get": {
-                "description": "Retorna um departamento com sua árvore hierárquica",
+                "description": "Retorna um departamento com sua árvore hierárquica e informações do gerente.",
                 "produces": [
                     "application/json"
                 ],
@@ -376,19 +365,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/domain.DepartamentoResponse"
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/domain.ErrIDInvalido"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/domain.ErrColaboradorNaoEncontrado"
                         }
                     }
                 }
             },
             "put": {
-                "description": "Atualiza os dados de um departamento",
+                "description": "Atualiza os dados de um departamento. Valida gerente, departamento superior e previne ciclos.",
                 "consumes": [
                     "application/json"
                 ],
@@ -409,7 +401,7 @@ const docTemplate = `{
                     },
                     {
                         "description": "Dados do departamento",
-                        "name": "departamento",
+                        "name": "payload",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -427,34 +419,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/domain.ErrPayloadInvalido"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/domain.ErrColaboradorNaoEncontrado"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/domain.ErrRGJaCadastrado"
                         }
                     },
                     "422": {
                         "description": "Unprocessable Entity",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/domain.ErrDepartamentoNaoEncontrado"
                         }
                     }
                 }
             },
             "delete": {
-                "description": "Remove um departamento",
+                "description": "Remove um departamento.",
                 "tags": [
                     "departamentos"
                 ],
@@ -470,15 +459,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "204": {
-                        "description": "No Content"
+                        "description": "Sem conteúdo",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/domain.ErrIDInvalido"
+                        }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/domain.ErrColaboradorNaoEncontrado"
                         }
                     }
                 }
@@ -486,7 +481,7 @@ const docTemplate = `{
         },
         "/api/v1/gerentes/{id}/colaboradores": {
             "get": {
-                "description": "Retorna todos os colaboradores dos departamentos subordinados ao gerente",
+                "description": "Retorna todos os colaboradores dos departamentos subordinados ao gerente informado.",
                 "produces": [
                     "application/json"
                 ],
@@ -513,13 +508,16 @@ const docTemplate = `{
                             }
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/domain.ErrIDInvalido"
+                        }
+                    },
+                    "404": {
+                        "description": "Exemplo: {\\\"error\\\":\\\"gerente não encontrado\\\"}",
+                        "schema": {
+                            "$ref": "#/definitions/domain.ErrorResponse"
                         }
                     }
                 }
@@ -584,31 +582,42 @@ const docTemplate = `{
                 }
             }
         },
+        "domain.ColaboradorPage": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Colaborador"
+                    }
+                },
+                "page": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "page_size": {
+                    "type": "integer",
+                    "example": 10
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
         "domain.ColaboradorResponse": {
             "type": "object",
             "properties": {
                 "cpf": {
                     "type": "string"
                 },
-                "created_at": {
-                    "type": "string"
-                },
                 "departamento_id": {
-                    "type": "string"
-                },
-                "id": {
                     "type": "string"
                 },
                 "nome": {
                     "type": "string"
                 },
-                "nome_gerente": {
-                    "type": "string"
-                },
                 "rg": {
-                    "type": "string"
-                },
-                "updated_at": {
                     "type": "string"
                 }
             }
@@ -701,6 +710,78 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                }
+            }
+        },
+        "domain.ErrCPFInvalido": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "CPF inválido"
+                }
+            }
+        },
+        "domain.ErrCPFJaCadastrado": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "CPF já cadastrado"
+                }
+            }
+        },
+        "domain.ErrColaboradorNaoEncontrado": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "Colaborador não encontrado"
+                }
+            }
+        },
+        "domain.ErrDepartamentoNaoEncontrado": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "Departamento não encontrado"
+                }
+            }
+        },
+        "domain.ErrIDInvalido": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "ID inválido"
+                }
+            }
+        },
+        "domain.ErrPayloadInvalido": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "json: cannot unmarshal"
+                }
+            }
+        },
+        "domain.ErrRGJaCadastrado": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "RG já cadastrado"
+                }
+            }
+        },
+        "domain.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "Mensagem de erro"
                 }
             }
         }

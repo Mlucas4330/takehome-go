@@ -19,15 +19,17 @@ func NewColaboradorHandler(service *services.ColaboradorService) *ColaboradorHan
 
 // Create godoc
 // @Summary Criar colaborador
-// @Description Cria um novo colaborador
+// @Description Cria um novo colaborador. Valida CPF (único e válido), RG (único se informado) e existência do departamento.
 // @Tags colaboradores
 // @Accept json
 // @Produce json
-// @Param colaborador body domain.Colaborador true "Dados do colaborador"
+// @Param payload body domain.Colaborador true "Dados do colaborador"
 // @Success 201 {object} domain.Colaborador
-// @Failure 400 {object} map[string]string
-// @Failure 422 {object} map[string]string
-// @Failure 409 {object} map[string]string
+// @Failure 400 {object} domain.ErrPayloadInvalido
+// @Failure 409 {object} domain.ErrCPFJaCadastrado
+// @Failure 409 {object} domain.ErrRGJaCadastrado
+// @Failure 422 {object} domain.ErrCPFInvalido
+// @Failure 422 {object} domain.ErrDepartamentoNaoEncontrado
 // @Router /api/v1/colaboradores [post]
 func (h *ColaboradorHandler) Create(c *gin.Context) {
 	var colaborador domain.Colaborador
@@ -50,12 +52,13 @@ func (h *ColaboradorHandler) Create(c *gin.Context) {
 
 // GetByID godoc
 // @Summary Buscar colaborador por ID
-// @Description Retorna um colaborador e o nome do gerente
+// @Description Retorna um colaborador e o nome do gerente do seu departamento.
 // @Tags colaboradores
 // @Produce json
 // @Param id path string true "ID do colaborador"
 // @Success 200 {object} domain.ColaboradorResponse
-// @Failure 404 {object} map[string]string
+// @Failure 400 {object} domain.ErrIDInvalido
+// @Failure 404 {object} domain.ErrColaboradorNaoEncontrado
 // @Router /api/v1/colaboradores/{id} [get]
 func (h *ColaboradorHandler) GetByID(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
@@ -75,16 +78,20 @@ func (h *ColaboradorHandler) GetByID(c *gin.Context) {
 
 // Update godoc
 // @Summary Atualizar colaborador
-// @Description Atualiza os dados de um colaborador
+// @Description Atualiza os dados de um colaborador. Aplica as mesmas validações de criação.
 // @Tags colaboradores
 // @Accept json
 // @Produce json
 // @Param id path string true "ID do colaborador"
-// @Param colaborador body domain.Colaborador true "Dados do colaborador"
+// @Param payload body domain.Colaborador true "Dados do colaborador"
 // @Success 200 {object} domain.Colaborador
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 422 {object} map[string]string
+// @Failure 400 {object} domain.ErrIDInvalido
+// @Failure 400 {object} domain.ErrPayloadInvalido
+// @Failure 404 {object} domain.ErrColaboradorNaoEncontrado
+// @Failure 409 {object} domain.ErrCPFJaCadastrado
+// @Failure 409 {object} domain.ErrRGJaCadastrado
+// @Failure 422 {object} domain.ErrCPFInvalido
+// @Failure 422 {object} domain.ErrDepartamentoNaoEncontrado
 // @Router /api/v1/colaboradores/{id} [put]
 func (h *ColaboradorHandler) Update(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
@@ -104,6 +111,9 @@ func (h *ColaboradorHandler) Update(c *gin.Context) {
 		if err.Error() == "Colaborador não encontrado" {
 			statusCode = http.StatusNotFound
 		}
+		if err.Error() == "CPF já cadastrado" || err.Error() == "RG já cadastrado" {
+			statusCode = http.StatusConflict
+		}
 		c.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
@@ -113,11 +123,13 @@ func (h *ColaboradorHandler) Update(c *gin.Context) {
 
 // Delete godoc
 // @Summary Deletar colaborador
-// @Description Remove um colaborador
+// @Description Remove um colaborador.
 // @Tags colaboradores
 // @Param id path string true "ID do colaborador"
-// @Success 204
-// @Failure 404 {object} map[string]string
+// @Success 204 {string} string "Sem conteúdo"
+// @Success 204 {string} string "Sem conteúdo"
+// @Failure 400 {object} domain.ErrIDInvalido
+// @Failure 404 {object} domain.ErrColaboradorNaoEncontrado
 // @Router /api/v1/colaboradores/{id} [delete]
 func (h *ColaboradorHandler) Delete(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
@@ -136,13 +148,13 @@ func (h *ColaboradorHandler) Delete(c *gin.Context) {
 
 // List godoc
 // @Summary Listar colaboradores
-// @Description Lista colaboradores com filtros e paginação
+// @Description Lista colaboradores com filtros e paginação. Filtros aceitos: nome, cpf, rg, departamento_id.
 // @Tags colaboradores
 // @Accept json
 // @Produce json
 // @Param request body domain.ColaboradorListRequest true "Filtros e paginação"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]string
+// @Success 200 {object} domain.ColaboradorPage
+// @Failure 400 {object} domain.ErrPayloadInvalido
 // @Router /api/v1/colaboradores/listar [post]
 func (h *ColaboradorHandler) List(c *gin.Context) {
 	var req domain.ColaboradorListRequest

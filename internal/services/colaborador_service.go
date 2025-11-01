@@ -63,17 +63,10 @@ func (s *ColaboradorService) GetByID(id uuid.UUID) (*domain.ColaboradorResponse,
 	}
 
 	response := &domain.ColaboradorResponse{
-		ID:             colaborador.ID,
 		Nome:           colaborador.Nome,
 		CPF:            colaborador.CPF,
 		RG:             colaborador.RG,
 		DepartamentoID: colaborador.DepartamentoID,
-		CreatedAt:      colaborador.CreatedAt,
-		UpdatedAt:      colaborador.UpdatedAt,
-	}
-
-	if colaborador.Departamento != nil && colaborador.Departamento.Gerente != nil {
-		response.NomeGerente = colaborador.Departamento.Gerente.Nome
 	}
 
 	return response, nil
@@ -140,16 +133,10 @@ func (s *ColaboradorService) List(req domain.ColaboradorListRequest) ([]domain.C
 	responses := make([]domain.ColaboradorResponse, len(colaboradores))
 	for i, c := range colaboradores {
 		responses[i] = domain.ColaboradorResponse{
-			ID:             c.ID,
 			Nome:           c.Nome,
 			CPF:            c.CPF,
 			RG:             c.RG,
 			DepartamentoID: c.DepartamentoID,
-			CreatedAt:      c.CreatedAt,
-			UpdatedAt:      c.UpdatedAt,
-		}
-		if c.Departamento != nil && c.Departamento.Gerente != nil {
-			responses[i].NomeGerente = c.Departamento.Gerente.Nome
 		}
 	}
 

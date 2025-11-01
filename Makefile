@@ -1,4 +1,4 @@
-.PHONY: help install swagger build run test docker-build docker-up docker-down migrate-up migrate-info logs
+.PHONY: help install swagger build run test docker-up docker-down migrate-up migrate-info logs
 
 APP_NAME=takehome-go
 DOCKER_COMPOSE=docker-compose
@@ -12,7 +12,6 @@ help:
 	@echo "  make build         - Compila a aplicação"
 	@echo "  make run           - Roda a aplicação localmente"
 	@echo "  make test          - Executa testes"
-	@echo "  make docker-build  - Monta Postgres, aplica migrations (Flyway) e API"
 	@echo "  make docker-up     - Sobe Postgres, aplica migrations (Flyway) e API"
 	@echo "  make docker-down   - Para os containers"
 	@echo "  make migrate-up    - Executa migrations (Flyway)"
@@ -36,14 +35,11 @@ run: swagger
 test:
 	$(GO) test ./...
 
-docker-build:
-	$(DOCKER_COMPOSE) build
-
 docker-up:
-	$(DOCKER_COMPOSE) up -d
+	$(DOCKER_COMPOSE) up -d --build
 
 docker-down:
-	$(DOCKER_COMPOSE) down
+	$(DOCKER_COMPOSE) down -v
 
 migrate-up:
 	$(DOCKER_COMPOSE) run --rm flyway migrate

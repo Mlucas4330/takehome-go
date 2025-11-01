@@ -18,14 +18,10 @@ type Colaborador struct {
 }
 
 type ColaboradorResponse struct {
-	ID             uuid.UUID `json:"id"`
 	Nome           string    `json:"nome"`
 	CPF            string    `json:"cpf"`
 	RG             *string   `json:"rg,omitempty"`
 	DepartamentoID uuid.UUID `json:"departamento_id"`
-	NomeGerente    string    `json:"nome_gerente"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 type ColaboradorListRequest struct {

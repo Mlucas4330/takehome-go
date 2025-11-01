@@ -19,14 +19,17 @@ func NewDepartamentoHandler(service *services.DepartamentoService) *Departamento
 
 // Create godoc
 // @Summary Criar departamento
-// @Description Cria um novo departamento
+// @Description Cria um novo departamento. Valida gerente (se informado), departamento superior (se informado) e previne ciclos.
 // @Tags departamentos
 // @Accept json
 // @Produce json
-// @Param departamento body domain.Departamento true "Dados do departamento"
+// @Param payload body domain.Departamento true "Dados do departamento"
 // @Success 201 {object} domain.Departamento
-// @Failure 400 {object} map[string]string
-// @Failure 422 {object} map[string]string
+// @Failure 400 {object} domain.ErrPayloadInvalido
+// @Failure 409 {object} domain.ErrCPFJaCadastrado
+// @Failure 409 {object} domain.ErrRGJaCadastrado
+// @Failure 422 {object} domain.ErrCPFInvalido
+// @Failure 422 {object} domain.ErrDepartamentoNaoEncontrado
 // @Router /api/v1/departamentos [post]
 func (h *DepartamentoHandler) Create(c *gin.Context) {
 	var departamento domain.Departamento
@@ -36,6 +39,7 @@ func (h *DepartamentoHandler) Create(c *gin.Context) {
 	}
 
 	if err := h.service.Create(&departamento); err != nil {
+		// Opcional: se sua service diferenciar erros 409 vs 422, você pode mapear aqui
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
 	}
@@ -45,12 +49,13 @@ func (h *DepartamentoHandler) Create(c *gin.Context) {
 
 // GetByID godoc
 // @Summary Buscar departamento por ID
-// @Description Retorna um departamento com sua árvore hierárquica
+// @Description Retorna um departamento com sua árvore hierárquica e informações do gerente.
 // @Tags departamentos
 // @Produce json
 // @Param id path string true "ID do departamento"
 // @Success 200 {object} domain.DepartamentoResponse
-// @Failure 404 {object} map[string]string
+// @Failure 400 {object} domain.ErrIDInvalido
+// @Failure 404 {object} domain.ErrColaboradorNaoEncontrado
 // @Router /api/v1/departamentos/{id} [get]
 func (h *DepartamentoHandler) GetByID(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
@@ -70,16 +75,20 @@ func (h *DepartamentoHandler) GetByID(c *gin.Context) {
 
 // Update godoc
 // @Summary Atualizar departamento
-// @Description Atualiza os dados de um departamento
+// @Description Atualiza os dados de um departamento. Valida gerente, departamento superior e previne ciclos.
 // @Tags departamentos
 // @Accept json
 // @Produce json
 // @Param id path string true "ID do departamento"
-// @Param departamento body domain.Departamento true "Dados do departamento"
+// @Param payload body domain.Departamento true "Dados do departamento"
 // @Success 200 {object} domain.Departamento
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 422 {object} map[string]string
+// @Failure 400 {object} domain.ErrIDInvalido
+// @Failure 400 {object} domain.ErrPayloadInvalido
+// @Failure 404 {object} domain.ErrColaboradorNaoEncontrado
+// @Failure 409 {object} domain.ErrCPFJaCadastrado
+// @Failure 409 {object} domain.ErrRGJaCadastrado
+// @Failure 422 {object} domain.ErrCPFInvalido
+// @Failure 422 {object} domain.ErrDepartamentoNaoEncontrado
 // @Router /api/v1/departamentos/{id} [put]
 func (h *DepartamentoHandler) Update(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
@@ -108,11 +117,12 @@ func (h *DepartamentoHandler) Update(c *gin.Context) {
 
 // Delete godoc
 // @Summary Deletar departamento
-// @Description Remove um departamento
+// @Description Remove um departamento.
 // @Tags departamentos
 // @Param id path string true "ID do departamento"
-// @Success 204
-// @Failure 404 {object} map[string]string
+// @Success 204 {string} string "Sem conteúdo"
+// @Failure 400 {object} domain.ErrIDInvalido
+// @Failure 404 {object} domain.ErrColaboradorNaoEncontrado
 // @Router /api/v1/departamentos/{id} [delete]
 func (h *DepartamentoHandler) Delete(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
@@ -131,13 +141,13 @@ func (h *DepartamentoHandler) Delete(c *gin.Context) {
 
 // List godoc
 // @Summary Listar departamentos
-// @Description Lista departamentos com filtros e paginação
+// @Description Lista departamentos com filtros e paginação. Filtros: nome, gerente_nome, departamento_superior_id.
 // @Tags departamentos
 // @Accept json
 // @Produce json
 // @Param request body domain.DepartamentoListRequest true "Filtros e paginação"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]string
+// @Success 200 {object} domain.ColaboradorPage
+// @Failure 400 {object} domain.ErrPayloadInvalido
 // @Router /api/v1/departamentos/listar [post]
 func (h *DepartamentoHandler) List(c *gin.Context) {
 	var req domain.DepartamentoListRequest
@@ -162,12 +172,13 @@ func (h *DepartamentoHandler) List(c *gin.Context) {
 
 // GetGerenteColaboradores godoc
 // @Summary Listar colaboradores subordinados ao gerente
-// @Description Retorna todos os colaboradores dos departamentos subordinados ao gerente
+// @Description Retorna todos os colaboradores dos departamentos subordinados ao gerente informado.
 // @Tags gerentes
 // @Produce json
 // @Param id path string true "ID do gerente"
 // @Success 200 {array} domain.Colaborador
-// @Failure 404 {object} map[string]string
+// @Failure 400 {object} domain.ErrIDInvalido
+// @Failure 404 {object} domain.ErrorResponse "Exemplo: {\"error\":\"gerente não encontrado\"}"
 // @Router /api/v1/gerentes/{id}/colaboradores [get]
 func (h *DepartamentoHandler) GetGerenteColaboradores(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
