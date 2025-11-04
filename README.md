@@ -116,9 +116,6 @@ Ao finalizar, publique o **repositório no GitHub** e compartilhe o link para av
 ---
 
 ## 📦 Como Rodar o Projeto
-
-### 🐳 Com Docker + PostgreSQL
-
 1. **Instalar dependências (opcional, para gerar Swagger localmente)**
 
     ```bash
@@ -180,7 +177,7 @@ make migrate
 
 ### ⚙️ Pré-requisitos
 
--   Serviço **flyway** definido no `docker-compose` com volume apontando para `./db/migrations`.
+-   Serviço **flyway** definido no `docker-compose` com volume apontando para `./migrations`.
 -   Variáveis configuradas (no `.env` ou `docker-compose`).
 
 ---
