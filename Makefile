@@ -1,4 +1,4 @@
-.PHONY: help up down logs rebuild migrate swagger clean env deps
+.PHONY: help up down logs rebuild migrate swagger clean deps
 
 help:
 	@echo Comandos disponiveis:
@@ -12,11 +12,8 @@ help:
 	@echo   clean     - Remove containers e volumes
 
 deps:
-	@echo "Instalando dependências Go..."
 	go mod download
-	@echo "Instalando swag..."
 	go install github.com/swaggo/swag/cmd/swag@latest
-	@echo "Dependências instaladas com sucesso!"
 
 up:
 	docker compose up -d
