@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -30,21 +31,25 @@ var (
 func PrometheusMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
-
 		c.Next()
 
 		duration := time.Since(start).Seconds()
-		status := c.Writer.Status()
+		status := fmt.Sprint(c.Writer.Status())
+
+		endpoint := c.FullPath()
+		if endpoint == "" {
+			endpoint = "unknown"
+		}
 
 		httpRequestsTotal.WithLabelValues(
 			c.Request.Method,
-			c.FullPath(),
-			string(rune(status)),
+			endpoint,
+			status,
 		).Inc()
 
 		httpRequestDuration.WithLabelValues(
 			c.Request.Method,
-			c.FullPath(),
+			endpoint,
 		).Observe(duration)
 	}
 }
