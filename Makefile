@@ -35,7 +35,6 @@ migrate:
 	docker compose run --rm flyway migrate
 
 swagger:
-	@command -v swag >/dev/null 2>&1 || { echo "Erro: 'swag' não encontrado. Execute 'make deps' primeiro."; exit 1; }
 	swag init -g cmd/api/main.go -o ./docs
 
 clean:
