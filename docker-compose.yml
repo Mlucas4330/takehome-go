@@ -1,0 +1,65 @@
+services:
+    postgres:
+        image: postgres:16-alpine
+        container_name: takehome-postgres
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASS}
+            POSTGRES_DB: ${POSTGRES_DB}
+        ports:
+            - '5432:5432'
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER}']
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    redis:
+        image: redis:7-alpine
+        container_name: takehome-redis
+        ports:
+            - '6379:6379'
+        healthcheck:
+            test: ['CMD', 'redis-cli', 'ping']
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    flyway:
+        image: flyway/flyway:10
+        container_name: takehome-flyway
+        volumes:
+            - ./migrations:/flyway/sql
+        environment:
+            FLYWAY_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+            FLYWAY_USER: ${POSTGRES_USER}
+            FLYWAY_PASSWORD: ${POSTGRES_PASS}
+            FLYWAY_BASELINE_ON_MIGRATE: 'true'
+        command: migrate
+        depends_on:
+            postgres:
+                condition: service_healthy
+
+    api:
+        build: .
+        container_name: takehome-api
+        env_file:
+            - .env
+        environment:
+            POSTGRES_HOST: postgres
+            REDIS_HOST: redis
+        ports:
+            - '${PORT}:${PORT}'
+        depends_on:
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+            flyway:
+                condition: service_completed_successfully
+        restart: unless-stopped
+
+volumes:
+    postgres_data:

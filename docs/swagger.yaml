@@ -1,0 +1,516 @@
+basePath: /api/v1
+definitions:
+  dto.ColaboradorResponse:
+    properties:
+      cpf:
+        type: string
+      created_at:
+        type: string
+      departamento_id:
+        type: string
+      id:
+        type: string
+      nome:
+        type: string
+      nome_gerente:
+        type: string
+      rg:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.CreateColaboradorRequest:
+    properties:
+      cpf:
+        type: string
+      departamento_id:
+        type: string
+      nome:
+        type: string
+      rg:
+        type: string
+    required:
+    - cpf
+    - departamento_id
+    - nome
+    type: object
+  dto.CreateDepartamentoRequest:
+    properties:
+      departamento_superior_id:
+        type: string
+      gerente_id:
+        type: string
+      nome:
+        type: string
+    required:
+    - gerente_id
+    - nome
+    type: object
+  dto.DepartamentoResponse:
+    properties:
+      created_at:
+        type: string
+      departamento_superior_id:
+        type: string
+      gerente:
+        $ref: '#/definitions/model.Colaborador'
+      id:
+        type: string
+      nome:
+        type: string
+      subdepartamentos:
+        items:
+          $ref: '#/definitions/model.Departamento'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  dto.ListColaboradoresResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/model.Colaborador'
+        type: array
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  dto.ListDepartamentosResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/model.Departamento'
+        type: array
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  dto.UpdateColaboradorRequest:
+    properties:
+      cpf:
+        type: string
+      departamento_id:
+        type: string
+      nome:
+        type: string
+      rg:
+        type: string
+    type: object
+  dto.UpdateDepartamentoRequest:
+    properties:
+      departamento_superior_id:
+        type: string
+      gerente_id:
+        type: string
+      nome:
+        type: string
+    type: object
+  handler.ErrorResponse:
+    properties:
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  model.Colaborador:
+    properties:
+      cpf:
+        type: string
+      created_at:
+        type: string
+      departamento:
+        $ref: '#/definitions/model.Departamento'
+      departamento_id:
+        type: string
+      id:
+        type: string
+      nome:
+        type: string
+      rg:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  model.Departamento:
+    properties:
+      created_at:
+        type: string
+      departamento_superior:
+        $ref: '#/definitions/model.Departamento'
+      departamento_superior_id:
+        type: string
+      gerente:
+        $ref: '#/definitions/model.Colaborador'
+      gerente_id:
+        type: string
+      id:
+        type: string
+      nome:
+        type: string
+      subdepartamentos:
+        items:
+          $ref: '#/definitions/model.Departamento'
+        type: array
+      updated_at:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API REST para gerenciar Colaboradores e Departamentos
+  title: Takehome-go API
+  version: "1.0"
+paths:
+  /colaboradores:
+    post:
+      consumes:
+      - application/json
+      description: Cria um novo colaborador
+      parameters:
+      - description: Dados do colaborador
+        in: body
+        name: colaborador
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateColaboradorRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Colaborador'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Criar colaborador
+      tags:
+      - colaboradores
+  /colaboradores/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove um colaborador
+      parameters:
+      - description: ID do colaborador
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Deletar colaborador
+      tags:
+      - colaboradores
+    get:
+      consumes:
+      - application/json
+      description: Retorna um colaborador pelo ID com o nome do gerente
+      parameters:
+      - description: ID do colaborador
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ColaboradorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Buscar colaborador por ID
+      tags:
+      - colaboradores
+    put:
+      consumes:
+      - application/json
+      description: Atualiza os dados de um colaborador
+      parameters:
+      - description: ID do colaborador
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados do colaborador
+        in: body
+        name: colaborador
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateColaboradorRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Colaborador'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Atualizar colaborador
+      tags:
+      - colaboradores
+  /colaboradores/listar:
+    post:
+      consumes:
+      - application/json
+      description: Lista colaboradores com filtros e paginação
+      parameters:
+      - description: Filtros (nome, cpf, rg, departamento_id)
+        in: body
+        name: filters
+        schema:
+          additionalProperties: true
+          type: object
+      - default: 1
+        description: Página
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Tamanho da página
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ListColaboradoresResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Listar colaboradores
+      tags:
+      - colaboradores
+  /departamentos:
+    post:
+      consumes:
+      - application/json
+      description: Cria um novo departamento
+      parameters:
+      - description: Dados do departamento
+        in: body
+        name: departamento
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateDepartamentoRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Departamento'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Criar departamento
+      tags:
+      - departamentos
+  /departamentos/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove um departamento
+      parameters:
+      - description: ID do departamento
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Deletar departamento
+      tags:
+      - departamentos
+    get:
+      consumes:
+      - application/json
+      description: Retorna um departamento com sua árvore hierárquica completa
+      parameters:
+      - description: ID do departamento
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DepartamentoResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Buscar departamento por ID
+      tags:
+      - departamentos
+    put:
+      consumes:
+      - application/json
+      description: Atualiza os dados de um departamento
+      parameters:
+      - description: ID do departamento
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados do departamento
+        in: body
+        name: departamento
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateDepartamentoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Departamento'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Atualizar departamento
+      tags:
+      - departamentos
+  /departamentos/listar:
+    post:
+      consumes:
+      - application/json
+      description: Lista departamentos com filtros e paginação
+      parameters:
+      - description: Filtros (nome, gerente_nome, departamento_superior_id)
+        in: body
+        name: filters
+        schema:
+          additionalProperties: true
+          type: object
+      - default: 1
+        description: Página
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Tamanho da página
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ListDepartamentosResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Listar departamentos
+      tags:
+      - departamentos
+  /gerentes/{id}/colaboradores:
+    get:
+      consumes:
+      - application/json
+      description: Retorna todos os colaboradores dos departamentos subordinados ao
+        gerente
+      parameters:
+      - description: ID do gerente
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Colaborador'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Buscar colaboradores por gerente
+      tags:
+      - gerentes
+swagger: "2.0"

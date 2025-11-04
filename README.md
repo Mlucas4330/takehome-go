@@ -115,14 +115,165 @@ Ao finalizar, publique o **repositório no GitHub** e compartilhe o link para av
 
 ---
 
-## 📖 Exemplos de Payloads
+## 📦 Como Rodar o Projeto
 
-### Criar Colaborador
-```json
-POST /api/v1/colaboradores
-{
-  "nome": "Ana Silva",
-  "cpf": "12345678909",
-  "rg": "MG1234567",
-  "departamento_id": "018f3c3e-5c79-7b21-b7e1-d45f80cfa5ab"
-}
+### 🐳 Com Docker + PostgreSQL
+
+1. **Instalar dependências (opcional, para gerar Swagger localmente)**
+
+    ```bash
+    make deps
+    ```
+
+2. **Subir os serviços (app + postgres)**
+
+    ```bash
+    make up
+    ```
+
+3. **Ver logs**
+
+    ```bash
+    make logs
+    ```
+
+4. **Reconstruir imagens após alterações**
+
+    ```bash
+    make rebuild
+    ```
+
+5. **Parar e limpar containers**
+
+    ```bash
+    make down
+    make clean  # remove volumes também
+    ```
+
+### 🔗 Endpoints expostos
+
+-   API: [http://localhost:8080](http://localhost:8080)
+-   Swagger: [http://localhost:8080/docs/index.html](http://localhost:8080/docs/index.html)
+
+### ⚙️ Observações
+
+-   Certifique-se de possuir um arquivo `.env` com:
+
+    ```
+    POSTGRES_HOST=localhost
+    POSTGRES_DB=takehome
+    POSTGRES_USER=postgres
+    POSTGRES_PASSWORD=postgres
+    ```
+
+-   A aplicação usa PostgreSQL; garanta que a porta `5432` esteja livre.
+
+---
+
+## 🧭 Migrations com Flyway
+
+### ▶️ Executar migrations
+
+```bash
+make migrate
+```
+
+### ⚙️ Pré-requisitos
+
+-   Serviço **flyway** definido no `docker-compose` com volume apontando para `./db/migrations`.
+-   Variáveis configuradas (no `.env` ou `docker-compose`).
+
+---
+
+## 🧾 Documentação Swagger
+
+### 📄 Geração/atualização
+
+```bash
+make deps
+make swagger
+```
+
+### 🌐 Acesso no navegador
+
+[http://localhost:8080/docs/index.html](http://localhost:8080/docs/index.html)
+
+## 🧪 Exemplos de Requests
+
+### 🔹 Criar colaborador
+
+```bash
+curl -X POST http://localhost:8080/api/v1/colaboradores \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nome": "Ana Silva",
+    "cpf": "12345678909",
+    "rg": "MG1234567",
+    "departamento_id": "018f3c3e-5c79-7b21-b7e1-d45f80cfa5ab"
+  }'
+```
+
+### 🔹 Obter colaborador por ID
+
+```bash
+curl http://localhost:8080/api/v1/colaboradores/018f3c3e-5c79-7b21-b7e1-d45f80cfa5ac
+```
+
+### 🔹 Listar colaboradores com filtros
+
+```bash
+curl -X POST http://localhost:8080/api/v1/colaboradores/listar \
+  -H "Content-Type: application/json" \
+  -d '{
+    "filtros": {
+      "nome": "Ana",
+      "cpf": "",
+      "rg": "",
+      "departamento_id": ""
+    },
+    "page": 1,
+    "page_size": 20
+  }'
+```
+
+### 🔹 Criar departamento
+
+```bash
+curl -X POST http://localhost:8080/api/v1/departamentos \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nome": "TI",
+    "gerente_id": "018f3c3e-5c79-7b21-b7e1-d45f80cfa5ad",
+    "departamento_superior_id": null
+  }'
+```
+
+### 🔹 Obter departamento (com hierarquia)
+
+```bash
+curl http://localhost:8080/api/v1/departamentos/018f3c3e-5c79-7b21-b7e1-d45f80cfa5ae
+```
+
+### 🔹 Listar departamentos com filtros
+
+```bash
+curl -X POST http://localhost:8080/api/v1/departamentos/listar \
+  -H "Content-Type: application/json" \
+  -d '{
+    "filtros": {
+      "nome": "TI",
+      "gerente_nome": "Ana",
+      "departamento_superior_id": ""
+    },
+    "page": 1,
+    "page_size": 10
+  }'
+```
+
+### 🔹 Colaboradores subordinados a um gerente
+
+```bash
+curl http://localhost:8080/api/v1/gerentes/018f3c3e-5c79-7b21-b7e1-d45f80cfa5ad/colaboradores
+```
+
+---
